@@ -30,7 +30,7 @@ export default function Home() {
                 </a> */}
                 <a
                   className="flex items-center justify-center w-full h-10 px-4 py-2 text-sm text-blue-500 transition-all bg-white border border-gray-300 rounded-lg md:w-auto md:font-semibold hover:text-blue-400"
-                  href="/homepage"
+                  href="/soon"
                 >
                   Get Started Now →
                 </a>
@@ -114,8 +114,8 @@ export default function Home() {
                   </p>
                   <p className="mt-2 text-sm text-gray-500">
                     Achieving excellence in developing a SaaS necessitates a
-                    collaborative effort, and InventorSpot unites your team to refine
-                    the actual product delivered to users.
+                    collaborative effort, and InventorSpot unites your team to
+                    refine the actual product delivered to users.
                   </p>
                 </div>
                 <div>
@@ -123,9 +123,9 @@ export default function Home() {
                     ⏤ Blazing fast discussions and callouts
                   </p>
                   <p className="mt-2 text-sm text-gray-500">
-                    InventorSpott streamlines the iterative process for SaaS creators
-                    and stakeholders, reducing the dependency on prolonged
-                    meetings and extensive review cycles.
+                    InventorSpott streamlines the iterative process for SaaS
+                    creators and stakeholders, reducing the dependency on
+                    prolonged meetings and extensive review cycles.
                   </p>
                 </div>
                 <div>
@@ -133,7 +133,9 @@ export default function Home() {
                     ⏤ Diversify the culture of bootstrapping
                   </p>
                   <p className="mt-2 text-sm text-gray-500">
-                    InventorSpott dosen't only have place for SaaS founders and developers, we got some video creators and many more professions to help any startup bootstrap
+                    InventorSpott dosen't only have place for SaaS founders and
+                    developers, we got some video creators and many more
+                    professions to help any startup bootstrap
                   </p>
                 </div>
               </div>
@@ -167,7 +169,7 @@ export default function Home() {
                     type="email"
                   />
                   <button
-                    className="flex items-center justify-center h-10 px-4 py-2 text-sm font-semibold text-white transition-all bg-[#ED9B40] rounded-lg shrink-0 hover:bg-blue-600"
+                    className="flex items-center justify-center h-10 px-4 py-2 text-sm font-semibold text-white transition-all duration-100 bg-[#ED9B40] rounded-lg shrink-0 hover:bg-blue-600"
                     type="submit"
                   >
                     Join the waitlist
@@ -184,7 +186,6 @@ export default function Home() {
                 <div className="inline-flex items-center gap-3">
                   <p className="text-2xl font-bold uppercase">InventorSpott</p>
                 </div>
-                
               </div>
               <div className="grid grid-cols-2 gap-8 mt-12 lg:grid-cols-3 lg:mt-0 xl:col-span-2">
                 <div>
@@ -239,7 +240,7 @@ export default function Home() {
             <div className="flex flex-col pt-12 md:flex-row md:items-center md:justify-between">
               <p className="text-left">
                 <span className="mx-auto mt-2 text-sm text-gray-500 lg:mx-0">
-                  Made by : {" "}
+                  Made by :{" "}
                   <a
                     className="text-blue-500 hover:text-blue-600"
                     href="https://mrinal-portfolio.vercel.app"
