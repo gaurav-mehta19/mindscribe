@@ -18,7 +18,7 @@ const AboutMenu = () => {
         <div className="flex flex-col items-start space-y-3">
           {items.map((item, index) => (
             <div key={index} className="flex items-center gap-4">
-              {/* <div classNameName="bg-white p-1 rounded-sm shadow-sm">
+              {/* <div className="bg-white p-1 rounded-sm shadow-sm">
                 {item.icon}
               </div> */}
               <div>
