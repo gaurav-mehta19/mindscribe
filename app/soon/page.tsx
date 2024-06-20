@@ -1,5 +1,36 @@
+"use client";
+import React,{ useEffect, useState } from "react";
+
 const SoonPage = () => {
-  
+  const countdownDays = 19;
+  const oneDayInMillis = 24 * 60 * 60 * 1000;
+  const [timeLeft, setTimeLeft] = useState<number>(countdownDays * oneDayInMillis);
+
+  useEffect(() => {
+      const countdownEndDate = new Date().getTime() + countdownDays * oneDayInMillis;
+
+      const updateTimer = () => {
+          const now = new Date().getTime();
+          const distance = countdownEndDate - now;
+
+          if (distance < 0) {
+              setTimeLeft(0);
+              clearInterval(intervalId);
+              return;
+          }
+
+          setTimeLeft(distance);
+      };
+
+      const intervalId = setInterval(updateTimer, 1000);
+
+      return () => clearInterval(intervalId);
+  }, []);
+
+  const days = Math.floor(timeLeft / oneDayInMillis);
+  const hours = Math.floor((timeLeft % oneDayInMillis) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
   return (
     <div className="flex justify-center items-center h-screen">
@@ -7,11 +38,11 @@ const SoonPage = () => {
         <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-24">
           <div className="text-center">
             <h1 className="text-4xl sm:text-6xl font-bold text-gray-800 dark:text-neutral-200">
-                We are dropping soon !!
+              We are dropping soon !!
             </h1>
 
             <p className="mt-3 text-gray-600 dark:text-neutral-400">
-                stay tuned
+              stay tuned, we are dropping out in {days}d {hours}h {minutes}m {seconds}s
             </p>
 
             <div className="mt-7 sm:mt-12 mx-auto max-w-xl relative">
