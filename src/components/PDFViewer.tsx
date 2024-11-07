@@ -66,7 +66,6 @@ export default function PDFViewer() {
     const newPage = Math.min(Math.max(1, pageNum), numPages || 1);
     setPageNumber(newPage);
 
-    // Load annotations for new page
     const pageAnnotation = annotations.find((a) => a.pageNumber === newPage);
     if (pageAnnotation) {
       fabric.Image.fromURL(pageAnnotation.canvasData, (img) => {
@@ -109,14 +108,21 @@ export default function PDFViewer() {
 
     try {
       const pdfDoc = await PDFDocument.create();
+      const existingPdfBytes = await fetch(pdfFile).then(res => res.arrayBuffer());
+      const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
+
+      const copiedPages = await pdfDoc.copyPages(existingPdfDoc, existingPdfDoc.getPageIndices());
+      copiedPages.forEach((page) => {
+        pdfDoc.addPage(page);
+      });
+
       const currentAnnotation = canvas.toDataURL();
       const updatedAnnotations = annotations
         .filter((a) => a.pageNumber !== pageNumber)
         .concat({ pageNumber, canvasData: currentAnnotation });
 
-      // Create pages with annotations
       for (let i = 1; i <= (numPages || 1); i++) {
-        const page = pdfDoc.addPage();
+        const page = pdfDoc.getPage(i - 1); // Get the page from the copied pages
         const annotation = updatedAnnotations.find((a) => a.pageNumber === i);
 
         if (annotation) {
