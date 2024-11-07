@@ -1,19 +1,20 @@
-import React from "react";
-import {
-  Type,
-  Pencil,
-  Square,
-  Circle,
-  Image as ImageIcon,
-  Eraser,
+import React from 'react';
+import { 
+  Type, 
+  Pencil, 
+  Square, 
+  Circle, 
+  Image as ImageIcon, 
+  Eraser, 
   Download,
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
+  ChevronLeft, 
+  ChevronRight, 
+  ZoomIn, 
+  ZoomOut, 
   RotateCw,
   Highlighter,
-} from "lucide-react";
+  SplitSquareVertical
+} from 'lucide-react';
 
 interface ToolbarProps {
   pageNumber: number;
@@ -25,6 +26,8 @@ interface ToolbarProps {
   onToolSelect: (tool: string) => void;
   selectedTool: string;
   onDownload: () => void;
+  onToggleNotes: () => void;
+  isMobileView: boolean;
 }
 
 export default function Toolbar({
@@ -37,19 +40,21 @@ export default function Toolbar({
   onToolSelect,
   selectedTool,
   onDownload,
+  onToggleNotes,
+  isMobileView
 }: ToolbarProps) {
   const tools = [
-    { id: "text", icon: Type, label: "Add Text" },
-    { id: "draw", icon: Pencil, label: "Draw" },
-    { id: "highlighter", icon: Highlighter, label: "Highlighter" },
-    { id: "rectangle", icon: Square, label: "Add Rectangle" },
-    { id: "circle", icon: Circle, label: "Add Circle" },
-    { id: "image", icon: ImageIcon, label: "Add Image" },
-    { id: "eraser", icon: Eraser, label: "Eraser" },
+    { id: 'text', icon: Type, label: 'Add Text' },
+    { id: 'draw', icon: Pencil, label: 'Draw' },
+    { id: 'highlighter', icon: Highlighter, label: 'Highlighter' },
+    { id: 'rectangle', icon: Square, label: 'Add Rectangle' },
+    { id: 'circle', icon: Circle, label: 'Add Circle' },
+    { id: 'image', icon: ImageIcon, label: 'Add Image' },
+    { id: 'eraser', icon: Eraser, label: 'Eraser' },
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
+    <div className="bg-white rounded-lg shadow-sm p-2 md:p-4 flex flex-wrap items-center justify-between gap-2">
       <div className="flex items-center space-x-2">
         <button
           onClick={() => onPageChange(-1)}
@@ -58,8 +63,8 @@ export default function Toolbar({
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="text-sm">
-          Page {pageNumber} of {numPages}
+        <span className="text-sm whitespace-nowrap">
+          {pageNumber} / {numPages}
         </span>
         <button
           onClick={() => onPageChange(1)}
@@ -70,13 +75,13 @@ export default function Toolbar({
         </button>
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 overflow-x-auto">
         {tools.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => onToolSelect(id)}
             className={`p-2 rounded hover:bg-gray-100 tooltip ${
-              selectedTool === id ? "bg-blue-100" : ""
+              selectedTool === id ? 'bg-blue-100' : ''
             }`}
             title={label}
           >
@@ -90,19 +95,33 @@ export default function Toolbar({
         >
           <ZoomOut className="w-5 h-5" />
         </button>
-        <span className="text-sm">{Math.round(scale * 100)}%</span>
+        <span className="text-sm whitespace-nowrap">{Math.round(scale * 100)}%</span>
         <button
           onClick={() => onZoom(0.1)}
           className="p-2 rounded hover:bg-gray-100"
         >
           <ZoomIn className="w-5 h-5" />
         </button>
-        <button onClick={onRotate} className="p-2 rounded hover:bg-gray-100">
+        <button
+          onClick={onRotate}
+          className="p-2 rounded hover:bg-gray-100"
+        >
           <RotateCw className="w-5 h-5" />
         </button>
-        <button onClick={onDownload} className="p-2 rounded hover:bg-gray-100">
+        <button
+          onClick={onDownload}
+          className="p-2 rounded hover:bg-gray-100"
+        >
           <Download className="w-5 h-5" />
         </button>
+        {isMobileView && (
+          <button
+            onClick={onToggleNotes}
+            className="p-2 rounded hover:bg-gray-100"
+          >
+            <SplitSquareVertical className="w-5 h-5" />
+          </button>
+        )}
       </div>
     </div>
   );

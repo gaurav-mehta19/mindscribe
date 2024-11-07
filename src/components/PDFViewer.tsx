@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useDropzone } from "react-dropzone";
 import { Upload } from "lucide-react";
@@ -10,6 +10,11 @@ import { fabric } from "fabric";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
+interface PageAnnotation {
+  canvasData: string;
+  pageNumber: number;
+}
+
 export default function PDFViewer() {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -18,6 +23,21 @@ export default function PDFViewer() {
   const [rotation, setRotation] = useState(0);
   const [selectedTool, setSelectedTool] = useState("");
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
+  const [annotations, setAnnotations] = useState<PageAnnotation[]>([]);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [showNotes, setShowNotes] = useState(!isMobileView);
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobileView(mobile);
+      if (!mobile) setShowNotes(true);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -35,7 +55,27 @@ export default function PDFViewer() {
   };
 
   const changePage = (pageNum: number) => {
-    setPageNumber(Math.min(Math.max(1, pageNum), numPages || 1));
+    if (!canvas) return;
+
+    const currentAnnotation = canvas.toDataURL();
+    setAnnotations((prev) => {
+      const filtered = prev.filter((a) => a.pageNumber !== pageNumber);
+      return [...filtered, { pageNumber, canvasData: currentAnnotation }];
+    });
+
+    const newPage = Math.min(Math.max(1, pageNum), numPages || 1);
+    setPageNumber(newPage);
+
+    // Load annotations for new page
+    const pageAnnotation = annotations.find((a) => a.pageNumber === newPage);
+    if (pageAnnotation) {
+      fabric.Image.fromURL(pageAnnotation.canvasData, (img) => {
+        canvas.clear();
+        canvas.add(img);
+      });
+    } else {
+      canvas.clear();
+    }
   };
 
   const adjustZoom = (delta: number) => {
@@ -46,30 +86,50 @@ export default function PDFViewer() {
     setRotation((prevRotation) => (prevRotation + 90) % 360);
   };
 
-  const handleCanvasReady = useCallback((fabricCanvas: fabric.Canvas) => {
-    setCanvas(fabricCanvas);
-  }, []);
+  const handleCanvasReady = useCallback(
+    (fabricCanvas: fabric.Canvas) => {
+      setCanvas(fabricCanvas);
+
+      // Load annotations for current page
+      const pageAnnotation = annotations.find(
+        (a) => a.pageNumber === pageNumber
+      );
+      if (pageAnnotation) {
+        fabric.Image.fromURL(pageAnnotation.canvasData, (img) => {
+          fabricCanvas.clear();
+          fabricCanvas.add(img);
+        });
+      }
+    },
+    [annotations, pageNumber]
+  );
 
   const handleDownload = async () => {
     if (!pdfFile || !canvas) return;
 
     try {
       const pdfDoc = await PDFDocument.create();
-      const page = pdfDoc.addPage();
+      const currentAnnotation = canvas.toDataURL();
+      const updatedAnnotations = annotations
+        .filter((a) => a.pageNumber !== pageNumber)
+        .concat({ pageNumber, canvasData: currentAnnotation });
 
-      const dataUrl = canvas.toDataURL({
-        format: "png",
-        quality: 1,
-      });
+      // Create pages with annotations
+      for (let i = 1; i <= (numPages || 1); i++) {
+        const page = pdfDoc.addPage();
+        const annotation = updatedAnnotations.find((a) => a.pageNumber === i);
 
-      const image = await pdfDoc.embedPng(dataUrl);
-      const { width, height } = page.getSize();
-      page.drawImage(image, {
-        x: 0,
-        y: 0,
-        width,
-        height,
-      });
+        if (annotation) {
+          const image = await pdfDoc.embedPng(annotation.canvasData);
+          const { width, height } = page.getSize();
+          page.drawImage(image, {
+            x: 0,
+            y: 0,
+            width,
+            height,
+          });
+        }
+      }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
@@ -77,7 +137,7 @@ export default function PDFViewer() {
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = "edited-document.pdf";
+      link.download = "annotated-document.pdf";
       link.click();
 
       URL.revokeObjectURL(url);
@@ -86,7 +146,11 @@ export default function PDFViewer() {
     }
   };
 
-  const handleSaveNotes = (format: "md" | "txt") => {
+  const toggleNotes = () => {
+    setShowNotes((prev) => !prev);
+  };
+
+  function handleSaveNotes(format: "md" | "txt"): void {
     const element = document.querySelector("textarea");
     if (!element) return;
 
@@ -100,12 +164,12 @@ export default function PDFViewer() {
     link.download = `notes.${format}`;
     link.click();
     URL.revokeObjectURL(url);
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {!pdfFile ? (
-        <div className="p-8 flex-1">
+        <div className="p-4 md:p-8 flex-1">
           <div
             {...getRootProps()}
             className={`h-full border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-colors
@@ -116,19 +180,19 @@ export default function PDFViewer() {
               }`}
           >
             <input {...getInputProps()} />
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-4 p-4">
               <Upload className="w-12 h-12 mx-auto text-gray-400" />
               <p className="text-lg text-gray-600">
                 {isDragActive
                   ? "Drop your PDF here"
-                  : "Drag and drop a PDF file here, or click to select"}
+                  : "Drag and drop a PDF file here, or tap to select"}
               </p>
             </div>
           </div>
         </div>
       ) : (
         <div className="flex flex-col h-screen">
-          <div className="p-4 bg-gray-50">
+          <div className="p-2 md:p-4 bg-gray-50">
             <Toolbar
               pageNumber={pageNumber}
               numPages={numPages}
@@ -139,10 +203,21 @@ export default function PDFViewer() {
               onToolSelect={setSelectedTool}
               selectedTool={selectedTool}
               onDownload={handleDownload}
+              onToggleNotes={toggleNotes}
+              isMobileView={isMobileView}
             />
           </div>
-          <div className="flex flex-1 overflow-hidden">
-            <div className="w-1/2 bg-white p-4 overflow-auto border-r border-gray-200">
+          <div
+            className={`flex flex-1 overflow-hidden ${
+              isMobileView ? "flex-col" : ""
+            }`}
+          >
+            <div
+              ref={pageRef}
+              className={`${
+                isMobileView ? "h-1/2" : "w-1/2"
+              } bg-white p-4 overflow-auto border-r border-gray-200`}
+            >
               <div className="relative">
                 <Document
                   file={pdfFile}
@@ -164,17 +239,21 @@ export default function PDFViewer() {
                   scale={scale}
                   rotation={rotation}
                   onCanvasReady={handleCanvasReady}
+                  containerRef={pageRef}
                 />
               </div>
             </div>
-            <div className="w-1/2">
-              <NotesPanel
-                onSave={handleSaveNotes}
-                onPageJump={changePage}
-                currentPage={pageNumber}
-                totalPages={numPages || 1}
-              />
-            </div>
+            {(!isMobileView || showNotes) && (
+              <div className={`${isMobileView ? "h-1/2" : "w-1/2"}`}>
+                <NotesPanel
+                  onSave={handleSaveNotes}
+                  onPageJump={changePage}
+                  currentPage={pageNumber}
+                  totalPages={numPages || 1}
+                  isMobileView={isMobileView}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
